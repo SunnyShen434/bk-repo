@@ -103,7 +103,13 @@ class TrivyScanExecutor @Autowired constructor(
         val cacheBind = Bind(cacheDir.absolutePath, Volume(CACHE_DIR))
         val cmd = buildScanCmds(task, scannerInputFile)
         val result = dockerScanHelper.scan(
-            containerConfig.image, Binds(bind, cacheBind), cmd, scannerInputFile, task
+            containerConfig.image,
+            containerConfig.username,
+            containerConfig.password,
+            Binds(bind, cacheBind),
+            cmd,
+            scannerInputFile,
+            task
         )
         if (!result) {
             return scanStatus(task, taskWorkDir, SubScanTaskStatus.TIMEOUT)

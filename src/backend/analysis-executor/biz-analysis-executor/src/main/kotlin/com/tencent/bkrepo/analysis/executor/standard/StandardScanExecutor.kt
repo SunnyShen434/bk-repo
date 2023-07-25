@@ -74,6 +74,8 @@ class StandardScanExecutor(
         args.add("$CONTAINER_WORK_DIR/$OUTPUT_FILE")
         val result = dockerScanHelper.scan(
             image = scanner.image,
+            username = scanner.username,
+            password = scanner.password,
             binds = Binds(Bind(taskWorkDir.absolutePath, Volume(CONTAINER_WORK_DIR))),
             args = args,
             scannerInputFile = scannerInputFile,

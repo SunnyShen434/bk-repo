@@ -63,6 +63,10 @@ data class VulDbConfig(
 data class TrivyDockerImage(
     @ApiModelProperty("使用的镜像名和版本")
     val image: String,
+    @ApiModelProperty("镜像地址用户名")
+    val username: String? = null,
+    @ApiModelProperty("镜像地址密码")
+    val password: String? = null,
     @ApiModelProperty("容器内的工作目录")
     val workDir: String = "/data",
     @ApiModelProperty("输入目录，相对于workDir的路径")

@@ -86,6 +86,8 @@ class ScancodeToolkitExecutor @Autowired constructor(
         )
         val result = dockerScanHelper.scan(
             image = containerConfig.image,
+            username = containerConfig.username,
+            password = containerConfig.password,
             binds = Binds(Bind(taskWorkDir.absolutePath, Volume(containerConfig.workDir))),
             args = containerCmd,
             scannerInputFile = scannerInputFile,

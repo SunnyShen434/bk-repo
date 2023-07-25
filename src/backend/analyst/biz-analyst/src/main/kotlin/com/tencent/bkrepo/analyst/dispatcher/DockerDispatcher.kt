@@ -88,7 +88,11 @@ class DockerDispatcher(
         try {
             val command = buildCommand(scanner.cmd, scannerProperties.baseUrl, subtask.taskId, subtask.token!!)
             val containerId = dockerClient.createContainer(
-                image = scanner.image, hostConfig = hostConfig(), cmd = command
+                image = scanner.image,
+                username = scanner.username,
+                password = scanner.password,
+                hostConfig = hostConfig(),
+                cmd = command
             )
             dockerClient.startContainerCmd(containerId).exec()
             redisTemplate.ifAvailable

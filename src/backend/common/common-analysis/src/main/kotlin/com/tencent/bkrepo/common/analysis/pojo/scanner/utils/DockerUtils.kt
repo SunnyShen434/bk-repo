@@ -30,6 +30,7 @@ package com.tencent.bkrepo.common.analysis.pojo.scanner.utils
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.PullImageResultCallback
 import com.github.dockerjava.api.command.WaitContainerResultCallback
+import com.github.dockerjava.api.model.AuthConfig
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Ulimit
@@ -55,33 +56,39 @@ object DockerUtils {
     /**
      * 拉取镜像
      */
-    fun DockerClient.pullImage(tag: String) {
-        val images = listImagesCmd().exec()
-        val exists = images.any { image ->
+    private fun DockerClient.pullImage(tag: String, username: String?, password: String?) {
+        val exists = listImagesCmd().exec().any { image ->
             image.repoTags.any { it == tag }
         }
         if (exists) {
             return
         }
+
         logger.info("pulling image: $tag")
         val elapsedTime = measureTimeMillis {
-            val result = pullImageCmd(tag)
+            pullImageCmd(tag)
+                .apply {
+                    if (username != null && password != null) {
+                        withAuthConfig(AuthConfig().withUsername(username).withPassword(password))
+                    }
+                }
                 .exec(PullImageResultCallback())
                 .awaitCompletion(DEFAULT_PULL_IMAGE_DURATION, TimeUnit.MILLISECONDS)
-            if (!result) {
-                throw SystemErrorException(CommonMessageCode.SYSTEM_ERROR, "image $tag pull failed")
-            }
+                .takeIf { it }
+                ?: throw SystemErrorException(CommonMessageCode.SYSTEM_ERROR, "image $tag pull failed")
         }
         logger.info("image $tag pulled, elapse: $elapsedTime")
     }
 
     fun DockerClient.createContainer(
         image: String,
+        username: String?,
+        password: String?,
         hostConfig: HostConfig? = null,
         cmd: List<String>? = null
     ): String {
         // 拉取镜像
-        pullImage(image)
+        pullImage(image, username, password)
         // 创建容器
         val createCmd = createContainerCmd(image)
         hostConfig?.let { createCmd.withHostConfig(it) }

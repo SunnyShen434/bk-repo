@@ -63,6 +63,10 @@ class ArrowheadScanner(
 data class ArrowheadDockerImage(
     @ApiModelProperty("使用的镜像名和版本")
     val image: String,
+    @ApiModelProperty("镜像地址用户名")
+    val username: String? = null,
+    @ApiModelProperty("镜像地址密码")
+    val password: String? = null,
     @ApiModelProperty("容器启动参数")
     val args: String = "/data/standalone.toml",
     @ApiModelProperty("容器内的工作目录")

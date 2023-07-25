@@ -51,6 +51,8 @@ class DockerScanHelper(
 
     fun scan(
         image: String,
+        username: String?,
+        password: String?,
         binds: Binds,
         args: List<String>,
         scannerInputFile: File,
@@ -60,7 +62,7 @@ class DockerScanHelper(
         // 创建容器
         val maxFileSize = maxFileSize(scannerInputFile.length())
         val hostConfig = DockerUtils.dockerHostConfig(binds, maxFileSize, task.scanner.memory)
-        val containerId = dockerClient.createContainer(image, hostConfig, args)
+        val containerId = dockerClient.createContainer(image, username, password, hostConfig, args)
 
         taskContainerIdMap[task.taskId] = containerId
         logger.info(CommonUtils.buildLogMsg(task, "run container instance Id [$containerId]"))
