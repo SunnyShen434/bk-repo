@@ -95,10 +95,7 @@ class PackageIterator(
     private fun requestPackage(page: Int, pageSize: Int): List<Package> {
         // 拉取待扫描的package
         val packageQueryModel = QueryModel(
-            page = PageLimit(page, pageSize),
-            sort = null,
-            select = packageSelect,
-            rule = packageSummaryRule(position.rule)
+            PageLimit(page, pageSize), null, packageSelect, packageSummaryRule(position.rule)
         )
 
         val records = Request.request { packageClient.searchPackage(packageQueryModel) }!!.records
