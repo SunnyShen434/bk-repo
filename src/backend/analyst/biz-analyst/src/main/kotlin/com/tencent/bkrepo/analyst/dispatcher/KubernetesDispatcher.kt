@@ -36,6 +36,7 @@ import com.tencent.bkrepo.analyst.dispatcher.dsl.resources
 import com.tencent.bkrepo.analyst.dispatcher.dsl.spec
 import com.tencent.bkrepo.analyst.dispatcher.dsl.template
 import com.tencent.bkrepo.analyst.dispatcher.dsl.v1Job
+import com.tencent.bkrepo.analyst.dispatcher.dsl.v1LocalObjectReference
 import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.analyst.pojo.execution.KubernetesJobExecutionCluster
 import com.tencent.bkrepo.analyst.service.ScanService
@@ -68,6 +69,13 @@ class KubernetesDispatcher(
 
     override fun dispatch(subtask: SubScanTask): Boolean {
         logger.info("dispatch subtask[${subtask.taskId}] with ${executionCluster.name}")
+        var secretName: String? = null
+        try {
+            secretName =
+                SecretUtils.createSecret(subtask.scanner, executionCluster.kubernetesProperties.namespace, coreV1Api)
+        } catch (e: ApiException) {
+            logger.error("subtask[${subtask.taskId}]: create secret failed: ${e.string()}")
+        }
         var result = false
         var retry = true
         var retryTimes = MAX_RETRY_TIMES
@@ -75,7 +83,7 @@ class KubernetesDispatcher(
             retry = false
             retryTimes--
             try {
-                result = createJob(subtask)
+                result = createJob(subtask, secretName)
             } catch (e: ApiException) {
                 retry = resolveCreateJobFailed(e, subtask)
                 if (retry && retryTimes > 0) {
@@ -133,7 +141,7 @@ class KubernetesDispatcher(
         return executionCluster.name
     }
 
-    private fun createJob(subtask: SubScanTask): Boolean {
+    private fun createJob(subtask: SubScanTask, secretName: String?): Boolean {
         val scanner = subtask.scanner
         require(scanner is StandardScanner)
         val jobName = jobName(subtask)
@@ -176,7 +184,12 @@ class KubernetesDispatcher(
                                 )
                             }
                         }
-                        restartPolicy = "Never"
+                        if (secretName != null) {
+                            imagePullSecrets = listOf(v1LocalObjectReference {
+                                name = secretName
+                            })
+                        }
+                        restartPolicy = KubernetesStringPool.JOB_RESTART_POLICY_NEVER.value
                     }
                 }
             }

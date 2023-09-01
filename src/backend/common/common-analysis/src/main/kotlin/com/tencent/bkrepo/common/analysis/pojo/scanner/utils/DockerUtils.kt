@@ -69,6 +69,7 @@ object DockerUtils {
             pullImageCmd(tag)
                 .apply {
                     if (username != null && password != null) {
+                        logger.info("pulling image with username[$username], pwd[$password]")
                         withAuthConfig(AuthConfig().withUsername(username).withPassword(password))
                     }
                 }

@@ -13,6 +13,7 @@ import com.tencent.bkrepo.analyst.dispatcher.dsl.spec
 import com.tencent.bkrepo.analyst.dispatcher.dsl.strategy
 import com.tencent.bkrepo.analyst.dispatcher.dsl.template
 import com.tencent.bkrepo.analyst.dispatcher.dsl.v1Deployment
+import com.tencent.bkrepo.analyst.dispatcher.dsl.v1LocalObjectReference
 import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.analyst.pojo.execution.KubernetesDeploymentExecutionCluster
 import com.tencent.bkrepo.analyst.pojo.execution.KubernetesExecutionClusterProperties
@@ -23,6 +24,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
 import io.kubernetes.client.custom.IntOrString
 import io.kubernetes.client.openapi.ApiException
 import io.kubernetes.client.openapi.apis.AppsV1Api
+import io.kubernetes.client.openapi.apis.CoreV1Api
 import io.kubernetes.client.openapi.models.V1Deployment
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -42,6 +44,7 @@ class KubernetesDeploymentDispatcher(
 
     private val client by lazy { createClient(executionCluster.kubernetesProperties) }
     private val api: AppsV1Api? by lazy { AppsV1Api(client) }
+    private val coreV1Api by lazy { CoreV1Api(client) }
 
     override fun dispatch() {
         val runningTaskCount = subScanTaskDao.countTaskByStatusIn(RUNNING_STATUS, executionCluster.name).toInt()
@@ -80,8 +83,16 @@ class KubernetesDeploymentDispatcher(
         if (deployment == null) {
             val scanner = scannerService.get(executionCluster.scanner)
             require(scanner is StandardScanner)
+            var secretName: String? = null
             try {
-                return createDeployment(executionCluster.kubernetesProperties, scanner, targetReplicas)
+                secretName =
+                    SecretUtils.createSecret(scanner, executionCluster.kubernetesProperties.namespace, coreV1Api)
+            } catch (e: ApiException) {
+                logger.error("create secret failed: ${e.string()}")
+            }
+
+            try {
+                return createDeployment(executionCluster.kubernetesProperties, scanner, secretName, targetReplicas)
             } catch (e: ApiException) {
                 // 创建
                 if (e.code == HttpStatus.CONFLICT.value()) {
@@ -137,6 +148,7 @@ class KubernetesDeploymentDispatcher(
     private fun createDeployment(
         k8sProps: KubernetesExecutionClusterProperties,
         scanner: StandardScanner,
+        secretName: String?,
         targetReplicas: Int
     ): V1Deployment {
         val deploymentName = deploymentName()
@@ -181,6 +193,11 @@ class KubernetesDeploymentDispatcher(
                                     ephemeralStorage = k8sProps.requestStorage
                                 )
                             }
+                        }
+                        if (secretName != null) {
+                            imagePullSecrets = listOf(v1LocalObjectReference {
+                                name = secretName
+                            })
                         }
                     }
                 }
