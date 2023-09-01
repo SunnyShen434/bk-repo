@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2023 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,15 +29,11 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.oci.pojo.metadata
+package com.tencent.bkrepo.repository.dao
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonInclude
+import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
+import com.tencent.bkrepo.repository.model.TFavorites
+import org.springframework.stereotype.Repository
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class HelmMaintainerMetadata(
-    val name: String?,
-    val email: String?,
-    val url: String?
-)
+@Repository
+class FavoriteDao : SimpleMongoDao<TFavorites>()
