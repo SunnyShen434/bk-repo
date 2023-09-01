@@ -46,8 +46,8 @@ fun buildCommand(
     command.add(token)
     command.add("--task-id")
     command.add(subtaskId)
-    command.add("--heartbeat")
-    command.add((heartbeatTimeout.seconds / 2L).toString())
+//    command.add("--heartbeat")
+//    command.add((heartbeatTimeout.seconds / 2L).toString())
     return command
 }
 

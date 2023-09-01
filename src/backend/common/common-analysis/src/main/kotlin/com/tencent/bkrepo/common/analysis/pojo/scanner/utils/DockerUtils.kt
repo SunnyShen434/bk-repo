@@ -92,6 +92,7 @@ object DockerUtils {
         pullImage(image, username, password)
         // 创建容器
         val createCmd = createContainerCmd(image)
+        logger.info("createContainer image:$image, hostConfig:$hostConfig, cmd:$cmd")
         hostConfig?.let { createCmd.withHostConfig(it) }
         cmd?.let { createCmd.withCmd(it) }
         return createCmd.exec().id
