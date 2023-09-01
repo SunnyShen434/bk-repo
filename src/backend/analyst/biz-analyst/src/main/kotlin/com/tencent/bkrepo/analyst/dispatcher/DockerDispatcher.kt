@@ -135,10 +135,13 @@ class DockerDispatcher(
     private fun hostConfig(): HostConfig? {
         val url = scannerProperties.baseUrl.toHttpUrl()
         val address = InetAddress.getByName(url.host)
-        if (address.hostAddress == LOCALHOST) {
-            return HostConfig.newHostConfig().withExtraHosts("${url.host}:host-gateway")
+        logger.info("baseUrl:$url, address:$address")
+        val hostConfig = HostConfig.newHostConfig()
+        return if (address.hostAddress == LOCALHOST) {
+            hostConfig.withExtraHosts("${url.host}:host-gateway")
+        } else {
+            hostConfig.withExtraHosts("${url.host}:${address.hostAddress}")
         }
-        return null
     }
 
     companion object {
