@@ -57,6 +57,7 @@ class SubtaskStatusChangedEventListener(
     @EventListener(SubtaskStatusChangedEvent::class)
     fun listen(event: SubtaskStatusChangedEvent) {
         with(event.subtask) {
+            logger.info("plan_artifact_latest_sub_scan_task.status: $status")
             recordSubtask(event.subtask)
             // 未指定扫描方案表示为系统级别触发的扫描，不更新元数据
             if (planId == null) {
